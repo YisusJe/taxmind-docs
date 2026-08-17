@@ -1,0 +1,33 @@
+%% Flujo 1 — Onboarding: del registro a poder emitir comprobantes
+sequenceDiagram
+  autonumber
+  actor U as Admin de la empresa
+  participant App as App Android
+  participant Auth as Auth
+  participant DB as Base de datos
+  participant Sen as Señales (IA · SENIAT)
+  participant Eq as Equipo TaxMind (panel)
+
+  U->>App: Registro (nombre, correo, contraseña, acepta términos)
+  App->>Auth: Crear cuenta
+  Auth-->>U: Código de confirmación por correo
+  U->>App: Ingresa el código
+  App->>Auth: Verificar → sesión
+
+  U->>App: Crear empresa (RIF, razón social, dirección) — o unirse con código
+  App->>DB: Crear empresa + membresía admin (una transacción)
+  DB->>Sen: Consulta del RIF en el SENIAT (señal, en segundo plano)
+  DB-->>App: Empresa creada (prueba gratis de créditos asignada)
+
+  U->>App: Declarar responsable legal (documento + foto)
+  App->>DB: Guardar responsable → estado "pendiente"
+  App-)Sen: Lectura del documento por IA (señal, no bloqueante)
+  DB-)Eq: Aviso: responsable pendiente de verificación
+  Note over App: El Home muestra "pendiente" y<br/>"Nueva retención" queda deshabilitada
+
+  Eq->>DB: Revisa documento, datos y señales → verifica (o rechaza con motivo)
+  DB-)U: Correo: responsable verificado / rechazado
+  U->>App: Vuelve a la app
+  App->>DB: Estado del responsable
+  DB-->>App: verificado
+  Note over App: "Nueva retención" habilitada.<br/>Opcional: subir firma y sello para el PDF.

@@ -1,0 +1,24 @@
+%% C4 nivel 1 — contexto: quién usa TaxMind y con qué sistemas externos habla
+C4Context
+  title TaxMind — diagrama de contexto
+
+  Person(contador, "Contador / operador", "Trabaja en una empresa que es agente de retención de IVA. Fotografía facturas, revisa y emite comprobantes.")
+  Person(adminEmpresa, "Administrador de la empresa", "Crea la empresa, declara al responsable legal, invita miembros y compra créditos.")
+  Person(operador, "Equipo TaxMind", "Verifica responsables, valida pagos y opera la plataforma desde el panel admin.")
+
+  System(taxmind, "TaxMind", "App Android + backend Supabase + sitio + panel admin. Extrae facturas por IA, calcula la retención, emite comprobantes y el TXT del SENIAT.")
+
+  System_Ext(openai, "OpenAI (visión)", "Lee facturas y documentos de identidad a partir de fotos.")
+  System_Ext(seniat, "Portal SENIAT", "Consulta pública de RIF; destino final del TXT y de los comprobantes.")
+  System_Ext(bcv, "BCV", "Tasa oficial USD/Bs publicada a diario.")
+  System_Ext(correo, "Correo transaccional", "Notificaciones a usuarios y al equipo.")
+  System_Ext(cloudflare, "Cloudflare", "Hosting del sitio y del admin, control de acceso y distribución del APK.")
+
+  Rel(contador, taxmind, "Usa la app Android")
+  Rel(adminEmpresa, taxmind, "Usa la app Android")
+  Rel(operador, taxmind, "Usa el panel admin")
+  Rel(taxmind, openai, "Extracción por visión")
+  Rel(taxmind, seniat, "Consulta RIF")
+  Rel(taxmind, bcv, "Sincroniza tasa")
+  Rel(taxmind, correo, "Envía notificaciones")
+  Rel(taxmind, cloudflare, "Se sirve desde")

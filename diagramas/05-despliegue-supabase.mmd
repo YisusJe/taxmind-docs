@@ -1,0 +1,32 @@
+%% Despliegue del backend: qué servicios de Supabase intervienen y con qué habla cada uno
+flowchart LR
+  app["📱 App Android"]
+  admin["🛠️ Panel admin"]
+
+  subgraph supa["Supabase Cloud"]
+    gw["Gateway / API<br/>valida el JWT de cada petición"]
+    auth["Auth<br/>email + contraseña · TOTP (admin)"]
+    rest["PostgREST<br/>tablas + RPC bajo RLS"]
+    storage["Storage<br/>buckets privados · URLs firmadas"]
+    fn["Edge Functions (Deno)<br/>extracción IA · emisión + PDF · TXT<br/>señales de verificación · pagos · tasa · correo"]
+    db[("Postgres 17<br/>RLS · triggers · auditoría<br/>tareas programadas · Realtime")]
+  end
+
+  subgraph ext["Servicios externos"]
+    openai["OpenAI · visión"]
+    seniat["Portal SENIAT"]
+    bcv["BCV / agregador de tasa"]
+    resend["Resend · correo"]
+  end
+
+  app --> gw
+  admin --> gw
+  gw --> auth & rest & storage & fn
+  auth --> db
+  rest --> db
+  storage --> db
+  fn <--> db
+  db -. "eventos → notificaciones" .-> fn
+  db -. "programado → tasa" .-> fn
+  db -. "avisos en tiempo real" .-> admin
+  fn --> openai & seniat & bcv & resend

@@ -1,0 +1,23 @@
+%% Flujo 5 — Créditos y pagos: del paquete a la acreditación
+sequenceDiagram
+  autonumber
+  actor U as Admin de la empresa
+  participant App as App Android
+  participant DB as Base de datos
+  participant Eq as Equipo TaxMind (panel)
+  participant Tasa as Tasa BCV (programada)
+
+  Note over Tasa,DB: Dos veces al día: sincroniza la tasa oficial USD/Bs<br/>(fuente + respaldo, rechaza saltos anómalos)
+
+  U->>App: Créditos → elige un paquete
+  App->>DB: Catálogo de paquetes, datos de cobro activos, tasa vigente
+  App-->>U: Total en USD (con IVA/IGTF si pide factura) y en Bs a tasa BCV, QR de pago
+  U->>App: Paga por su banco y reporta: método, referencia, titular, captura
+  App->>DB: Guardar pago "reportado" (la app no puede marcarlo verificado)
+  DB-)Eq: Correo: pago reportado (con captura y enlace al panel)
+
+  Eq->>DB: Revisa y verifica (o rechaza con motivo)
+  DB->>DB: Acredita créditos: saldo + movimiento en el libro mayor (misma transacción)
+  App-->>U: Aviso: pago verificado (la app sondea el estado en primer plano)
+
+  Note over U,DB: Consumo: 1 crédito por comprobante emitido,<br/>dentro de la transacción de emisión. Sin saldo → 402 y la app lleva a Créditos.

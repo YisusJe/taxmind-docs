@@ -1,0 +1,26 @@
+%% Despliegue en Cloudflare: sitio, admin, distribución del APK y control de acceso
+flowchart TB
+  dns["DNS · taxmindve.com<br/>(zona en Cloudflare)"]
+
+  subgraph pages["Cloudflare Pages"]
+    web["taxmindve.com<br/>Astro estático"]
+  end
+  subgraph workers["Cloudflare Workers (Assets)"]
+    access["Cloudflare Access<br/>lista de correos permitidos"]
+    admin["admin.taxmindve.com<br/>React SPA"]
+  end
+  subgraph r2["Cloudflare R2"]
+    apk["descargas.taxmindve.com<br/>APK firmado + manifiesto de versión"]
+  end
+
+  ci["Repositorio del sitio<br/>push a main → CI"] -- "build + validación + wrangler" --> web
+  dev["Desarrollador<br/>wrangler deploy / r2 put"] --> admin
+  dev --> apk
+
+  dns --> web
+  dns --> access --> admin
+  dns --> apk
+
+  web -- "botón Descargar APK" --> apk
+  app["📱 App instalada"] -. "consulta manifiesto,<br/>descarga APK" .-> apk
+  admin -- "Auth + REST + Realtime" --> supa["Supabase Cloud"]

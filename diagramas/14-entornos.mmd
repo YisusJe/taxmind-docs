@@ -1,0 +1,25 @@
+%% Entornos de TaxMind: local (Docker) y producción, y qué se promueve entre ellos
+flowchart LR
+  code["Código (git)<br/>migraciones · funciones · app · sitio · admin"]
+
+  subgraph local["Entorno local (PC del desarrollador)"]
+    dock["Supabase CLI · Docker<br/>Postgres · Auth · PostgREST · Storage · Edge Runtime<br/>db reset = todas las migraciones + seed"]
+    applocal["App flavor <b>local</b><br/>package distinto, convive con prod<br/>adb reverse hacia el stack local"]
+    e2e["Scripts E2E / smoke<br/>contra el stack local"]
+    applocal --> dock
+    e2e --> dock
+  end
+
+  subgraph prod["Producción"]
+    supa["Supabase Cloud<br/>migraciones + funciones desplegadas con el CLI"]
+    appprod["App flavor <b>prod</b><br/>APK firmado desde R2 (o Play)"]
+    cf["Cloudflare<br/>Pages · Workers · Access · R2"]
+    appprod --> supa
+    appprod -. "manifiesto / APK" .-> cf
+    cf -. "admin → Auth/REST/Realtime" .-> supa
+  end
+
+  code --> dock
+  code -- "supabase db push<br/>functions deploy" --> supa
+  code -- "assembleProdRelease<br/>+ latest.json → R2" --> appprod
+  code -- "push a main → Actions / wrangler" --> cf

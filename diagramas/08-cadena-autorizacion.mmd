@@ -1,0 +1,26 @@
+%% Cadena de autorización de una petición típica de la app (genérica: sin nombres de tablas ni funciones)
+sequenceDiagram
+  autonumber
+  participant App as App Android
+  participant GW as Gateway Supabase
+  participant Auth as Auth
+  participant API as API REST (PostgREST)
+  participant DB as Postgres (RLS)
+  participant Fn as Edge Function
+
+  App->>GW: Petición con token de sesión (JWT)
+  GW->>Auth: ¿Token válido y vigente?
+  Auth-->>GW: Sí (usuario X)
+  GW->>API: Petición como rol "usuario autenticado"
+  API->>DB: SQL con el usuario X en contexto
+  Note over DB: 1) Permiso por tabla y comando<br/>2) Políticas RLS: sólo filas de empresas<br/>donde X es miembro (o admin, según la operación)
+  DB-->>API: Filas permitidas (o 0 filas / 403)
+  API-->>App: Respuesta
+
+  Note over App,Fn: Operación privilegiada (p. ej. emitir un comprobante)
+  App->>GW: Invoca la función con el mismo JWT
+  GW->>Fn: JWT verificado
+  Fn->>DB: Comprueba con el usuario X que puede operar sobre esa empresa
+  Fn->>DB: Sólo entonces ejecuta el paso privilegiado (rol de servidor, nunca expuesto al cliente)
+  DB-->>Fn: Resultado
+  Fn-->>App: Resultado (el cliente nunca recibió credenciales elevadas)

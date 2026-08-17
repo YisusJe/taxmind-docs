@@ -1,0 +1,5 @@
+# Texto siempre con LF (los scripts .sh y el sincronizador comparan bytes)
+*.md text eol=lf
+*.mmd text eol=lf
+*.sh text eol=lf
+*.png binary

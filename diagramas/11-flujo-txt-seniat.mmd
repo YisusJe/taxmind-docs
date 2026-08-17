@@ -1,0 +1,28 @@
+%% Flujo 4 — Cierre de quincena, TXT para el SENIAT y anulaciones posteriores
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant App as App Android
+  participant DB as Base de datos
+  participant Txt as Exportación TXT
+  participant SEN as Portal SENIAT
+
+  Note over App: 2 días antes del cierre: recordatorio local<br/>con las retenciones pendientes de emitir
+  U->>App: Historial → elige mes y quincena
+  App->>DB: Resumen de la quincena (emitidas, notas, totales)
+  U->>App: Exportar TXT
+  App->>Txt: Generar TXT de la quincena
+  Txt->>DB: Retenciones emitidas del período de emisión (bajo RLS del usuario)
+  Txt-->>App: Archivo de 16 columnas (NC en negativo, IGTF excluido)
+  U->>SEN: Declara con el TXT (fuera de TaxMind)
+  U->>App: Marcar quincena como declarada
+  App->>DB: Registrar la declaración (filas, total, fecha) — cierre suave
+
+  opt Anular un comprobante después de declarar
+    U->>App: Anular con motivo (sólo admin)
+    App->>DB: Anular
+    DB-->>App: La quincena ya fue declarada: ¿confirmar?
+    U->>App: Confirma
+    App->>DB: Anular marcando "post-declaración"
+    Note over DB: Conserva número y PDF, el correlativo no se renumera.<br/>Queda evidencia de que hace falta declaración sustitutiva.
+  end

@@ -1,0 +1,32 @@
+%% Flujo 2 — De la foto de la factura al comprobante emitido
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant App as App Android
+  participant St as Storage
+  participant Ext as Extracción (IA)
+  participant DB as Base de datos
+  participant Em as Emisión (PDF)
+
+  U->>App: Foto de la factura (cámara o galería)
+  App->>App: Comprime la imagen (menos de 1 MB, corrige rotación)
+  App->>St: Sube la foto (carpeta de la empresa)
+  App->>Ext: Extraer campos de esta foto
+  Ext->>DB: ¿Tiene créditos? ¿Dentro del cupo?
+  Ext->>Ext: Visión IA → RIF, razón social, número, fecha, bases, IVA, IGTF, total
+  Ext-->>App: Campos sugeridos (nada se guarda todavía)
+
+  U->>App: Revisa y corrige, alta del proveedor si es nuevo
+  App->>App: Cálculo local: 75 % / 100 % del IVA, cuadre con IGTF aparte, quincena
+  alt Factura 100 % exenta
+    App->>DB: Registrar como "exenta" (sin comprobante, sin crédito)
+  else Factura con IVA
+    App->>DB: Guardar factura + retención "pendiente"
+    U->>App: Emitir (fecha de emisión, nº inicial sólo la primera vez)
+    App->>Em: Emitir esta retención
+    Em->>DB: Función atómica: correlativo + número + fecha + quincena + consumo de crédito
+    DB-->>Em: Número de comprobante (todo o nada)
+    Em->>St: Genera el PDF con firma y sello y lo guarda
+    Em-->>App: Comprobante emitido (si el PDF falló, se regenera al reintentar)
+    App-->>U: Ver · compartir · guardar el PDF
+  end

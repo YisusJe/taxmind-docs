@@ -1,0 +1,40 @@
+%% C4 nivel 2 — contenedores: las piezas desplegables de TaxMind y sus protocolos
+C4Container
+  title TaxMind — diagrama de contenedores
+
+  Person(usuario, "Usuario de la empresa", "Contador, operador o administrador de la empresa")
+  Person(operador, "Equipo TaxMind", "Administra la plataforma")
+
+  System_Boundary(tm, "TaxMind") {
+    Container(app, "App Android", "Kotlin, Jetpack Compose, Hilt, Retrofit", "Cámara, revisión de la extracción, cálculo, comprobantes, historial, TXT, créditos.")
+    Container(web, "Sitio público", "Astro estático en Cloudflare Pages", "Explica el producto, precios, privacidad y entrega el APK.")
+    Container(admin, "Panel admin", "React SPA en Cloudflare Workers, tras Cloudflare Access", "Verificaciones, pagos, créditos, planes, tasa, auditoría, métricas en tiempo real.")
+    Container(r2, "Distribución", "Cloudflare R2", "APK firmado y manifiesto de actualización.")
+
+    System_Boundary(sb, "Supabase") {
+      Container(auth, "Auth", "GoTrue", "Sesiones email + contraseña; TOTP en el admin.")
+      Container(rest, "API REST", "PostgREST", "Tablas y funciones RPC bajo RLS.")
+      Container(storage, "Storage", "Buckets privados", "Facturas, comprobantes, firmas, documentos, capturas de pago.")
+      Container(fn, "Edge Functions", "Deno / TypeScript", "Extracción IA, emisión, TXT, señales de verificación, pagos, tasa, notificaciones.")
+      ContainerDb(db, "Postgres", "RLS, triggers, tareas programadas", "Fuente de verdad multi-tenant.")
+    }
+  }
+
+  System_Ext(ext, "Servicios externos", "OpenAI · SENIAT · BCV · correo")
+
+  Rel(usuario, app, "Usa")
+  Rel(usuario, web, "Visita y descarga el APK")
+  Rel(operador, admin, "Opera")
+  Rel(app, auth, "HTTPS")
+  Rel(app, rest, "HTTPS")
+  Rel(app, storage, "HTTPS, URLs firmadas")
+  Rel(app, fn, "HTTPS")
+  Rel(app, r2, "Consulta actualización")
+  Rel(web, r2, "Enlaza el APK")
+  Rel(admin, auth, "HTTPS")
+  Rel(admin, rest, "HTTPS + Realtime")
+  Rel(auth, db, "")
+  Rel(rest, db, "")
+  Rel(storage, db, "")
+  Rel(fn, db, "")
+  Rel(fn, ext, "HTTPS")

@@ -1,0 +1,26 @@
+%% Flujo 7 — Colaboración multiempresa: invitaciones, roles y avisos
+sequenceDiagram
+  autonumber
+  actor A as Admin de la empresa
+  participant App as App Android
+  participant DB as Base de datos
+  actor B as Usuario invitado
+  participant Correo as Correo
+
+  A->>App: Miembros → generar invitación (rol admin u operador, correo esperado)
+  App->>DB: Crear invitación
+  DB-->>App: Código de un solo uso (se guarda sólo su hash, vence en 7 días)
+  A-->>B: Comparte el código (WhatsApp, en persona…)
+
+  B->>App: Empresas → "Unirse con código"
+  App->>DB: Canjear código
+  DB->>DB: Límite de intentos por usuario, código inexistente, vencido,<br/>revocado o usado responden igual
+  DB-->>App: Membresía creada con el rol de la invitación
+  DB-)Correo: Aviso a los admins: alguien se unió a la empresa
+  B->>App: Trabaja en la empresa (según su rol)
+
+  opt Gestión posterior (sólo admin)
+    A->>App: Cambiar rol · quitar miembro · revocar invitación pendiente
+    App->>DB: Aplicar (nunca puede quedar la empresa sin admin)
+    DB->>DB: Auditoría por empresa
+  end

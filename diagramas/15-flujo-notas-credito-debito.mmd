@@ -1,0 +1,23 @@
+%% Flujo 3 — Notas de crédito y débito ligadas a la factura original
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant App as App Android
+  participant DB as Base de datos
+  participant Em as Emisión (PDF)
+
+  U->>App: Nueva retención → tipo "nota de crédito" (o débito)
+  App->>DB: Buscar facturas afectables del proveedor (emitidas, misma empresa)
+  U->>App: Elige la factura afectada e ingresa los montos de la nota
+  App->>App: Valida en local: misma quincena que la factura, NC ≤ total de la factura
+  App->>DB: Guardar nota (tipo de documento + enlace a la factura afectada)
+  DB->>DB: Valida de nuevo: misma empresa y proveedor, misma quincena,<br/>tope acumulado de NC vigentes ≤ total de la factura
+  alt Regla incumplida
+    DB-->>App: Error con código estable → mensaje claro al usuario
+  else OK
+    U->>App: Emitir
+    App->>Em: Emitir la retención de la nota
+    Em->>DB: Correlativo propio, mismo circuito que una factura
+    Em-->>App: Comprobante de la nota (PDF con montos de NC en negativo)
+  end
+  Note over App,DB: En el TXT y el resumen de quincena la NC resta.<br/>Los montos se guardan en positivo y el signo se aplica al reportar.

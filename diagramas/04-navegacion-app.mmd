@@ -1,0 +1,55 @@
+%% Navegación principal de la app (destinos por rol de pantalla; el destino inicial lo decide el estado de sesión)
+stateDiagram-v2
+  direction TB
+  [*] --> Arranque
+  Arranque --> Login: sin sesión
+  Arranque --> Empresas: sesión sin empresa activa
+  Arranque --> Home: sesión + empresa activa
+
+  state Login {
+    [*] --> IniciarSesion
+    IniciarSesion --> Registro
+    Registro --> VerificarCodigo
+    IniciarSesion --> RecuperarContrasena
+  }
+  Login --> Empresas: sesión creada
+
+  state Empresas {
+    [*] --> ListaEmpresas
+    ListaEmpresas --> CrearEmpresa
+    ListaEmpresas --> UnirseConCodigo
+  }
+  Empresas --> Responsable: empresa nueva / sin responsable verificado
+  Empresas --> Home: empresa seleccionada
+  Responsable --> FirmaSello
+  Responsable --> Home
+  FirmaSello --> Home
+
+  state Home {
+    [*] --> Panel
+    note right of Panel
+      Resumen de la quincena, créditos,
+      recordatorio de cierre.
+      "Nueva retención" se habilita sólo
+      con el responsable verificado.
+    end note
+  }
+  Home --> NuevaRetencion: factura / nota de crédito / nota de débito
+  Home --> Historial
+  Home --> Creditos
+  Home --> Miembros: sólo admin
+  Home --> Empresas: cambiar de empresa
+  Home --> Login: cerrar sesión
+
+  NuevaRetencion --> Creditos: sin créditos
+  NuevaRetencion --> FirmaSello: aún sin firma y sello
+  Historial --> Creditos
+  Creditos --> ReportarPago
+  Creditos --> DetallePago
+  ReportarPago --> Creditos: pago reportado
+
+  note left of Arranque
+    Sobre cualquier pantalla:
+    aviso de actualización (opcional u obligatorio)
+    y re-aceptación de términos si cambió la versión.
+  end note

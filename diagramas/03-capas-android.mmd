@@ -1,0 +1,38 @@
+%% Capas de la app Android: quién depende de quién (las flechas apuntan hacia la dependencia)
+flowchart TB
+  subgraph ui["ui/ — Jetpack Compose + ViewModels (Hilt)"]
+    direction LR
+    features["auth · empresa · home · retencion<br/>historial · creditos · firma"]
+    nav["navigation<br/>grafo, rutas, destino inicial"]
+    comps["components · theme"]
+  end
+
+  subgraph domain["domain/ — Kotlin puro, sin Android ni red"]
+    direction LR
+    models["model<br/>data classes de negocio"]
+    repos["repository<br/>interfaces (Result&lt;T&gt;)"]
+    logic["calc · validation<br/>retención IVA, IGTF, quincena,<br/>RIF/cédula, conversión Bs"]
+  end
+
+  subgraph data["data/ — implementación de acceso a datos"]
+    direction LR
+    impls["repository/*Impl<br/>Dispatchers.IO · runCatching · toDomain()"]
+    remote["remote<br/>Auth · REST · Storage · Functions · Descargas<br/>DTOs snake_case"]
+  end
+
+  subgraph core["core/ — transversal"]
+    direction LR
+    session["session (DataStore)"]
+    util["compresión de imagen · extracción de firma<br/>notificaciones · errores legibles"]
+  end
+
+  di["di/ — Hilt<br/>NetworkModule (2 clientes HTTP) · RepositoryModule"]
+
+  ui --> domain
+  ui --> core
+  data --> domain
+  data --> core
+  di -. provee .-> ui
+  di -. enlaza .-> data
+  remote -- "HTTPS" --> supa[("Supabase<br/>auth · rest · storage · functions")]
+  remote -. "manifiesto de versión" .-> r2["Cloudflare R2"]

@@ -1,0 +1,37 @@
+%% Diagrama general de TaxMind — fuente única; se copia tal cual en README.md y docs/01-vision-general.md
+flowchart LR
+  subgraph clientes["Clientes"]
+    app["📱 App Android<br/>Kotlin · Jetpack Compose"]
+    web["🌐 taxmindve.com<br/>Astro estático"]
+    admin["🛠️ Panel admin<br/>React SPA"]
+  end
+
+  subgraph supabase["Supabase"]
+    auth["Auth<br/>email + password · TOTP"]
+    rest["PostgREST<br/>REST · RPC"]
+    storage["Storage<br/>buckets privados"]
+    fn["Edge Functions<br/>Deno / TypeScript"]
+    db[("Postgres<br/>RLS · tareas programadas")]
+  end
+
+  subgraph externos["Servicios externos"]
+    openai["OpenAI · visión"]
+    seniat["Portal SENIAT · RIF"]
+    bcv["BCV · tasa"]
+    correo["Correo · Resend"]
+  end
+
+  cf["☁️ Cloudflare<br/>Pages · Workers · Access · R2"]
+
+  app --> auth & rest & storage & fn
+  app -. "latest.json / APK" .-> cf
+  admin --> auth & rest
+  admin -. "Realtime" .-> db
+  web -- "descarga APK" --> cf
+  web --- cf
+  admin --- cf
+
+  auth & rest & storage --> db
+  fn <--> db
+  db -- "eventos" --> fn
+  fn --> openai & seniat & bcv & correo

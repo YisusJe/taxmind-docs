@@ -1,0 +1,22 @@
+%% Flujo 6 — Actualización de la app instalada (distribución fuera de Play)
+sequenceDiagram
+  autonumber
+  participant App as App Android
+  participant R2 as Cloudflare R2 (dominio de descargas)
+  actor U as Usuario
+  participant OS as Android
+
+  App->>R2: Al arrancar: leer el manifiesto (latest.json)
+  R2-->>App: versión publicada, URL del APK, SHA-256,<br/>versión mínima soportada, versión de términos
+  alt Instalada es la publicada o más nueva
+    Note over App: Nada que hacer
+  else Instalada más vieja, pero aún soportada
+    App-->>U: Aviso opcional ("Más tarde" lo pospone)
+  else Instalada por debajo de la mínima soportada
+    App-->>U: Aviso obligatorio: la app se bloquea hasta actualizar
+  end
+  U->>App: Actualizar
+  App->>OS: Abre la URL del APK en el navegador
+  OS->>R2: Descarga el APK
+  U->>OS: Instala encima (misma firma, versionCode mayor)
+  Note over App: La sesión se conserva.<br/>Si el manifiesto trae una versión de términos nueva,<br/>la app pide re-aceptarlos.
